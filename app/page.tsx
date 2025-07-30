@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export default function Home() {
   const [magic, setMagic] = useState<any>(null);
@@ -18,25 +18,19 @@ export default function Home() {
   const [tailorLoading, setTailorLoading] = useState(false);
   const [tailorError, setTailorError] = useState("");
 
-  // Initialize Magic on client only
   useEffect(() => {
     import("magic-sdk").then(({ Magic }) => {
       setMagic(new Magic("pk_live_F6B6B81DED0251E0"));
     });
   }, []);
 
-  // Check login status once magic is ready
   useEffect(() => {
     if (!magic) return;
-    async function checkLogin() {
-      const loggedIn = await magic.user.isLoggedIn();
-      setIsLoggedIn(loggedIn);
-    }
-    checkLogin();
+    magic.user.isLoggedIn().then(setIsLoggedIn);
   }, [magic]);
 
-  // Handle sending magic link
-  const sendMagicLink = async () => {
+  // Wrap handlers with useCallback to avoid issues
+  const sendMagicLink = useCallback(async () => {
     if (!magic) return;
     setAuthError("");
     setAuthLoading(true);
@@ -48,10 +42,9 @@ export default function Home() {
       setAuthError("Failed to send magic link. Please try again.");
     }
     setAuthLoading(false);
-  };
+  }, [magic, email]);
 
-  // Handle logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     if (!magic) return;
     await magic.user.logout();
     setIsLoggedIn(false);
@@ -60,9 +53,8 @@ export default function Home() {
     setJobDesc("");
     setTailoredResume("");
     setTailorError("");
-  };
+  }, [magic]);
 
-  // Handle resume tailoring submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTailorError("");
@@ -125,9 +117,7 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200 flex items-center justify-center px-4">
       <div className="w-full max-w-4xl bg-white p-8 rounded-2xl shadow-xl">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-indigo-700">
-            AI-Powered Resume Tailor
-          </h1>
+          <h1 className="text-3xl font-bold text-indigo-700">AI-Powered Resume Tailor</h1>
           <button
             onClick={logout}
             className="text-sm font-semibold text-red-600 hover:text-red-800"
@@ -138,9 +128,7 @@ export default function Home() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-lg font-semibold text-black">
-              Your Resume
-            </label>
+            <label className="block text-lg font-semibold text-black">Your Resume</label>
             <textarea
               rows={6}
               value={resume}
@@ -152,9 +140,7 @@ export default function Home() {
           </div>
 
           <div>
-            <label className="block text-lg font-semibold text-black">
-              Job Description
-            </label>
+            <label className="block text-lg font-semibold text-black">Job Description</label>
             <textarea
               rows={6}
               value={jobDesc}
@@ -182,9 +168,7 @@ export default function Home() {
 
         {tailoredResume && (
           <div className="mt-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
-              Tailored Resume
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Tailored Resume</h2>
             <pre className="bg-gray-100 p-4 rounded-md whitespace-pre-wrap text-base font-mono leading-relaxed font-semibold text-gray-900">
               {tailoredResume}
             </pre>
