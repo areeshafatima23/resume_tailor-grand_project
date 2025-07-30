@@ -4,14 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 
 export default function Home() {
   const [magic, setMagic] = useState<any>(null);
-
-  // Auth state
   const [email, setEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
-
-  // Resume tailoring state
   const [resume, setResume] = useState("");
   const [jobDesc, setJobDesc] = useState("");
   const [tailoredResume, setTailoredResume] = useState("");
@@ -20,7 +16,13 @@ export default function Home() {
 
   useEffect(() => {
     import("magic-sdk").then(({ Magic }) => {
-      setMagic(new Magic("pk_live_F6B6B81DED0251E0"));
+      const magicKey = process.env.NEXT_PUBLIC_MAGIC_KEY || "pk_live_F6B6B81DED0251E0";
+      if (!magicKey) {
+        console.error("Magic key is missing!");
+        setAuthError("Configuration error. Please contact support.");
+        return;
+      }
+      setMagic(new Magic(magicKey));
     });
   }, []);
 
@@ -29,7 +31,6 @@ export default function Home() {
     magic.user.isLoggedIn().then(setIsLoggedIn);
   }, [magic]);
 
-  // Wrap handlers with useCallback to avoid issues
   const sendMagicLink = useCallback(async () => {
     if (!magic) return;
     setAuthError("");
@@ -94,7 +95,7 @@ export default function Home() {
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 mb-4 rounded-md border shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 text-lg font-semibold placeholder-black text-gray-900"
+            className="w-full p-3 mb-4 rounded-md border shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 text-lg font-semibold placeholder-gray-500 text-gray-900"
           />
           <button
             onClick={sendMagicLink}
@@ -133,7 +134,7 @@ export default function Home() {
               rows={6}
               value={resume}
               onChange={(e) => setResume(e.target.value)}
-              className="w-full mt-1 p-3 rounded-md border shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 text-lg font-semibold leading-relaxed font-sans placeholder-black text-gray-900"
+              className="w-full mt-1 p-3 rounded-md border shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 text-lg font-semibold leading-relaxed font-sans placeholder-gray-500 text-gray-900"
               placeholder="Paste your resume here..."
               required
             />
@@ -145,7 +146,7 @@ export default function Home() {
               rows={6}
               value={jobDesc}
               onChange={(e) => setJobDesc(e.target.value)}
-              className="w-full mt-1 p-3 rounded-md border shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 text-lg font-semibold leading-relaxed font-sans placeholder-black text-gray-900"
+              className="w-full mt-1 p-3 rounded-md border shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 text-lg font-semibold leading-relaxed font-sans placeholder-gray-500 text-gray-900"
               placeholder="Paste the job description here..."
               required
             />
@@ -153,10 +154,22 @@ export default function Home() {
 
           <button
             type="submit"
-            disabled={tailorLoading}
-            className="w-full py-3 px-6 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-200"
+            disabled={tailorLoading || !resume.trim() || !jobDesc.trim()}
+            className={`w-full py-3 px-6 text-white font-semibold rounded-lg transition duration-200 ${
+              tailorLoading || !resume.trim() || !jobDesc.trim()
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700"
+            }`}
           >
-            {tailorLoading ? "Tailoring Resume..." : "Tailor My Resume"}
+            {tailorLoading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Tailoring Resume...
+              </span>
+            ) : "Tailor My Resume"}
           </button>
         </form>
 
@@ -169,9 +182,9 @@ export default function Home() {
         {tailoredResume && (
           <div className="mt-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-2">Tailored Resume</h2>
-            <pre className="bg-gray-100 p-4 rounded-md whitespace-pre-wrap text-base font-mono leading-relaxed font-semibold text-gray-900">
+            <div className="bg-gray-100 p-4 rounded-md whitespace-pre-wrap text-base leading-relaxed font-sans text-gray-900">
               {tailoredResume}
-            </pre>
+            </div>
           </div>
         )}
       </div>
