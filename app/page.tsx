@@ -15,16 +15,18 @@ export default function Home() {
   const [tailorError, setTailorError] = useState("");
 
   useEffect(() => {
-    import("magic-sdk").then(({ Magic }) => {
-      setMagic(new Magic(process.env.NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY!));
-      if (!magicKey) {
-        console.error("Magic key is missing!");
-        setAuthError("Configuration error. Please contact support.");
-        return;
-      }
-      setMagic(new Magic(magicKey));
-    });
-  }, []);
+  const magicKey = process.env.NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY;
+  if (!magicKey) {
+    console.error("Magic key is missing!");
+    setAuthError("Configuration error. Please contact support.");
+    return;
+  }
+
+  import("magic-sdk").then(({ Magic }) => {
+    setMagic(new Magic(magicKey));
+  });
+}, []);
+
 
   useEffect(() => {
     if (!magic) return;
