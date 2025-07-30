@@ -16,7 +16,7 @@ export default function Home() {
 
   useEffect(() => {
     import("magic-sdk").then(({ Magic }) => {
-      const magicKey = process.env.NEXT_PUBLIC_MAGIC_KEY || "pk_live_F6B6B81DED0251E0";
+      setMagic(new Magic(process.env.NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY!));
       if (!magicKey) {
         console.error("Magic key is missing!");
         setAuthError("Configuration error. Please contact support.");
